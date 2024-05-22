@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using WebAPI6.Data;
+using WebAPI6.Helper;
 using WebAPI6.Models;
 
 namespace WebAPI6.Repository
@@ -13,16 +14,24 @@ namespace WebAPI6.Repository
         private readonly UserManager<ApplicationUser> userManager;
         private readonly SignInManager<ApplicationUser> signInManager;
         private readonly IConfiguration configuration;
+        private readonly RoleManager<IdentityRole> roleManager;
 
-        public AccountRepository(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
+        public AccountRepository(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration,RoleManager<IdentityRole>roleManager)
             {
 
             this.userManager = userManager;
             this.signInManager = signInManager;
             this.configuration = configuration;
+            this.roleManager = roleManager;
             }
         public async Task<string> SignInAsync(SignInModel model)
             {
+            var user = await userManager.FindByEmailAsync(model.Email);
+            var passwoldValid = await userManager.CheckPasswordAsync(user,model.Password);
+            if(user == null || !passwoldValid)
+                {
+                return string.Empty;
+                }
             var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
             if (!result.Succeeded)
                 {
@@ -33,16 +42,21 @@ namespace WebAPI6.Repository
                 new Claim(ClaimTypes.Email,model.Email),
                 new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
                 };
-            var authenKey =new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]));
+            var userRole = await userManager.GetRolesAsync(user);
+            foreach(var role in userRole)
+                {
+                authClaims.Add(new Claim(ClaimTypes.Role,role.ToString()));
+                }
+            var authenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]));
             var secretKey = configuration["JWT:Secret"];
             Console.WriteLine($"Secret Key Length: {secretKey.Length}");
 
             var token = new JwtSecurityToken(
                 issuer: configuration["JWT:ValidIssuer"],
                 audience: configuration["JWT:ValidAudience"],
-                expires:DateTime.Now.AddMinutes(20),
-                claims:authClaims,
-                signingCredentials:new SigningCredentials(authenKey,SecurityAlgorithms.HmacSha512Signature)
+                expires: DateTime.Now.AddMinutes(20),
+                claims: authClaims,
+                signingCredentials: new SigningCredentials(authenKey, SecurityAlgorithms.HmacSha512Signature)
                 );
             return new JwtSecurityTokenHandler().WriteToken(token);
             }
@@ -56,7 +70,17 @@ namespace WebAPI6.Repository
                 Email = model.Email,
                 UserName = model.Email
                 };
-            return await userManager.CreateAsync(user,model.Password);
+
+            var result = await userManager.CreateAsync(user, model.Password);
+            if(result.Succeeded)
+                {
+                if(!await roleManager.RoleExistsAsync(AppRole.Customer))
+                    {
+                    await roleManager.CreateAsync(new IdentityRole(AppRole.Customer));
+                    }
+                await userManager.AddToRoleAsync(user, AppRole.Customer);
+                }
+            return result;
             }
         }
     }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI6.Helper;
 using WebAPI6.Models;
 using WebAPI6.Repository;
 
@@ -29,7 +30,7 @@ namespace WebAPI6.Controllers
                 }
             }
         [HttpGet("{id}")]
-        [Authorize]
+        [Authorize(Roles = AppRole.Customer)]
         public async Task<IActionResult> GetBookAsync(int id)
             {
             //var book = await _repo.GetBookAsync(id);
