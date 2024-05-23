@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using WebAPI6.Models;
 using WebAPI6.Repository;
 
@@ -31,13 +32,22 @@ namespace WebAPI6.Controllers
         public async Task<IActionResult> SignIn(SignInModel signInModel)
             {
             var result = await _repo.SignInAsync(signInModel);
-            if (string.IsNullOrEmpty(result))
+            if (result.Empty!="")
                 {
                 return Unauthorized();
                 }
             return Ok(result);  
             }
+
+        [HttpPost("RenewToken")]
+        public async Task<IActionResult> RenewToken(TokenModel model)
+            {
+            var result = await _repo.RenewToken(model);
+            return Ok(result);
+            }
+
         }
+
 
 
     }

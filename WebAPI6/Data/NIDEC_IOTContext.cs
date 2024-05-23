@@ -6,32 +6,34 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace WebAPI6.Data
-{
-    public partial class NIDEC_IOTContext : IdentityDbContext<ApplicationUser>
     {
-        public NIDEC_IOTContext()
+    public partial class NIDEC_IOTContext : IdentityDbContext<ApplicationUser>
         {
-        }
+        public NIDEC_IOTContext()
+            {
+            }
 
         public NIDEC_IOTContext(DbContextOptions<NIDEC_IOTContext> options)
             : base(options)
-        {
-        }
+            {
+            }
 
         public virtual DbSet<Book> Books { get; set; } = null!;
         public virtual DbSet<TIotMoldMaster> TIotMoldMasters { get; set; } = null!;
+        public virtual DbSet<RefreshToken> RefreshToken { get; set; } = null!;
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
             {
+            if (!optionsBuilder.IsConfigured)
+                {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
                 optionsBuilder.UseSqlServer("Data Source=LAPTOP-99421S3D\\SQLEXPRESS;Initial Catalog=NIDEC_IOT;Integrated Security=True");
+                }
             }
-        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
+            {
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<IdentityUserLogin<string>>().HasKey(p => p.UserId);
@@ -108,8 +110,8 @@ namespace WebAPI6.Data
             });
 
             OnModelCreatingPartial(modelBuilder);
-        }
+            }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+        }
     }
-}

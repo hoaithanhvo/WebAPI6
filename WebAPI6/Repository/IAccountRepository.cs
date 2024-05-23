@@ -6,6 +6,8 @@ namespace WebAPI6.Repository
     public interface IAccountRepository
         {
         public Task<IdentityResult> SignUpAsync(SignUpModel model);
-        public Task<string> SignInAsync(SignInModel model);
+        public Task<TokenModel> SignInAsync(SignInModel model);
+        public Task<ApiResponse> RenewToken(TokenModel model);
+
         }
     }
